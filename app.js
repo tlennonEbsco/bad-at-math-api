@@ -4,6 +4,7 @@ const port = 3001
 const fileUpload = require('express-fileupload')
 const fs = require('fs');
 const path = require('path');
+const cors = require('cors');
 let morgan = require('morgan');
 
 app.use(fileUpload())
@@ -14,8 +15,6 @@ app.use(function(req, res, next) {
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
     next();
 });
-
-app.get('/', (req, res) => res.send({message: 'Hello World!'}));
 
 app.post('/upload', (req, res) => {
     if(!req.files) {
@@ -37,12 +36,22 @@ app.get('/file/:name', function(req, res) {
     res.download('./public/' + req.params.name);
 });
 
+app.options('/file/:name', cors());
+app.delete('/file/:name', cors(), (req, res) => {
+    fs.unlink(`./public/${req.params.name}`, (error) => {
+        if(error) {
+            res.status(500).send( { 'message': error })
+        } else {
+            res.status(200).send();
+        }
+
+    });
+});
+
 let extFilter = ['.gitignore', ''];
 
 function filterByExtension(element) {
     var extName = path.extname(element);
-    // console.log(element);
-    // console.log(path.extname(element));
     return extFilter.indexOf(extName) == -1 ? true : false;
 }
 
